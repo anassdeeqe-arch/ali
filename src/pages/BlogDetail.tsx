@@ -85,6 +85,7 @@ export const BlogDetail: React.FC = () => {
           <img 
             src={blog.image} 
             alt={blog.title} 
+            loading="lazy"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
@@ -110,9 +111,10 @@ export const BlogDetail: React.FC = () => {
           {/* Content */}
           <div className="lg:col-span-11 prose prose-lg max-w-none">
             <div className="bg-white p-8 md:p-16 rounded-[3rem] shadow-sm border border-gray-100 mb-12">
-              <p className="text-xl text-gray-600 leading-relaxed first-letter:text-5xl first-letter:font-serif first-letter:font-bold first-letter:mr-3 first-letter:float-left first-letter:text-accent-pink">
-                {blog.content}
-              </p>
+              <div 
+                className="text-xl text-gray-600 leading-relaxed first-letter:text-5xl first-letter:font-serif first-letter:font-bold first-letter:mr-3 first-letter:float-left first-letter:text-accent-pink"
+                dangerouslySetInnerHTML={{ __html: blog.content }}
+              />
               {blog.productLink && (
                 <div className="mt-8">
                   <a 
@@ -125,22 +127,6 @@ export const BlogDetail: React.FC = () => {
                   </a>
                 </div>
               )}
-              <div className="mt-12 space-y-8 text-gray-600 leading-relaxed">
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                </p>
-                <h3 className="text-2xl font-serif font-bold text-gray-900 mt-12 mb-6">The Future of Fashion</h3>
-                <p>
-                  Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                </p>
-                <div className="grid grid-cols-2 gap-4 my-12">
-                  <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800" alt="Fashion 1" className="rounded-2xl shadow-lg" />
-                  <img src="https://images.unsplash.com/photo-1539109132314-34a77ae7012b?auto=format&fit=crop&q=80&w=800" alt="Fashion 2" className="rounded-2xl shadow-lg" />
-                </div>
-                <p>
-                  Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.
-                </p>
-              </div>
             </div>
 
             {/* Author Box */}
@@ -167,7 +153,7 @@ export const BlogDetail: React.FC = () => {
             <Link key={related.id} to={`/blog/${related.id}`} className="group">
               <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 h-full flex flex-col hover:shadow-xl transition-all duration-500">
                 <div className="relative h-48 overflow-hidden">
-                  <img src={related.image} alt={related.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <img src={related.image} alt={related.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                 </div>
                 <div className="p-6">
                   <h3 className="text-lg font-serif font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-accent-pink transition-colors">

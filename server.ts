@@ -2,6 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import compression from "compression";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,6 +12,7 @@ async function startServer() {
   const PORT = 3000;
 
   // Middleware
+  app.use(compression()); // Compress all responses
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
@@ -24,11 +26,18 @@ async function startServer() {
     next();
   });
 
-  // Security headers middleware
+  // Security and caching headers middleware
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');
+    
+    // Cache static assets in production
+    if (process.env.NODE_ENV === "production" && req.method === 'GET') {
+      if (req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    }
     next();
   });
 

@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Calendar, Eye, ArrowRight } from 'lucide-react';
 import { store } from '../lib/store';
+import { stripHtml } from '../lib/utils';
 import { Newsletter } from '../components/Newsletter';
 import { BlogPost } from '../types';
 
@@ -107,6 +108,7 @@ export const Blog: React.FC = () => {
                   <img 
                     src={blog.image} 
                     alt={blog.title} 
+                    loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     referrerPolicy="no-referrer"
                   />
@@ -126,7 +128,7 @@ export const Blog: React.FC = () => {
                   </h2>
                   
                   <p className="text-gray-500 text-sm line-clamp-3 mb-8 flex-grow leading-relaxed">
-                    {blog.content}
+                    {stripHtml(blog.content)}
                   </p>
                   
                   <div className="pt-6 border-t border-gray-50 flex justify-between items-center">

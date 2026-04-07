@@ -37,6 +37,7 @@ export const About: React.FC = () => {
         <img 
           src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1920" 
           alt="About Us" 
+          loading="lazy"
           className="absolute inset-0 w-full h-full object-cover opacity-40"
           referrerPolicy="no-referrer"
         />
@@ -82,6 +83,7 @@ export const About: React.FC = () => {
               <img 
                 src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&q=80&w=800" 
                 alt="Fashion" 
+                loading="lazy"
                 className="rounded-[2rem] shadow-xl"
                 referrerPolicy="no-referrer"
               />

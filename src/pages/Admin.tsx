@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Editor } from '@tinymce/tinymce-react';
 import { 
   LayoutDashboard, FileText, TrendingUp, BarChart3, LogOut, 
   Plus, Trash2, Edit2, Save, X, Eye, MousePointer2, CheckCircle, AlertCircle,
@@ -14,12 +15,13 @@ import { cn } from '../lib/utils';
 
 export const Admin: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'blogs' | 'trending' | 'settings' | 'analytics'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'blogs' | 'trending' | 'settings' | 'analytics' | 'users'>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('elegance_admin_dark_mode') === 'true');
   
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [settings, setSettings] = useState<WebsiteSettings | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
 
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   
@@ -29,6 +31,12 @@ export const Admin: React.FC = () => {
   const [newBlog, setNewBlog] = useState<Partial<BlogPost>>({ category: 'Summer' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  const [newUser, setNewUser] = useState({ email: '', password: '', name: '' });
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -53,14 +61,16 @@ export const Admin: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [blogsData, analyticsData, settingsData] = await Promise.all([
+      const [blogsData, analyticsData, settingsData, usersData] = await Promise.all([
         store.getBlogs(),
         store.getAnalytics(),
-        store.getSettings()
+        store.getSettings(),
+        store.getUsers()
       ]);
       setBlogs(blogsData);
       setAnalytics(analyticsData);
       setSettings(settingsData);
+      setUsers(usersData);
     } catch (error) {
       console.error("Error fetching admin data:", error);
       showNotification('error', 'Failed to fetch dashboard data.');
@@ -87,12 +97,67 @@ export const Admin: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleGoogleLogin = async () => {
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  useEffect(() => {
+    // Auto-create the requested admin user once Email/Password auth is enabled
+    const bootstrapUser = async () => {
+      try {
+        // Firebase requires 6 character passwords, so padding with a 0
+        await store.createAdminUser('anassdeeqe@gmail.com', '898970', 'Anas');
+        console.log('Admin user anassdeeqe@gmail.com created successfully!');
+      } catch (error: any) {
+        if (error.code === 'auth/email-already-in-use') {
+          console.log('Admin user already exists, ready to login.');
+        } else if (error.code === 'auth/operation-not-allowed') {
+          console.warn('Waiting for Email/Password authentication to be enabled in Firebase Console...');
+        } else {
+          console.error('Bootstrap error:', error);
+        }
+      }
+    };
+    bootstrapUser();
+  }, []);
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
     try {
-      await store.loginWithGoogle();
-      showNotification('success', 'Logged in with Google!');
+      await store.loginWithEmail(email, password);
+      showNotification('success', 'Logged in successfully!');
     } catch (error: any) {
-      showNotification('error', error.message || 'Google login failed!');
+      showNotification('error', error.message || 'Login failed!');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isCreatingUser) return;
+    setIsCreatingUser(true);
+    try {
+      await store.createAdminUser(newUser.email, newUser.password, newUser.name);
+      showNotification('success', 'User created successfully!');
+      setNewUser({ email: '', password: '', name: '' });
+      fetchData();
+    } catch (error: any) {
+      showNotification('error', error.message || 'Failed to create user!');
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      try {
+        await store.deleteUserDoc(id);
+        showNotification('success', 'User deleted successfully!');
+        fetchData();
+      } catch (error: any) {
+        showNotification('error', error.message || 'Failed to delete user!');
+      }
     }
   };
 
@@ -260,21 +325,38 @@ export const Admin: React.FC = () => {
           <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">Admin Panel</h1>
           <p className="text-gray-500 text-sm mb-8 uppercase tracking-widest">Restricted Access</p>
           
-          <div className="space-y-6">
+          <form onSubmit={handleEmailLogin} className="space-y-6">
+            <div>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email Address" 
+                required
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-6 py-4 text-sm focus:outline-none focus:border-accent-pink"
+              />
+            </div>
+            <div>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password" 
+                required
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-6 py-4 text-sm focus:outline-none focus:border-accent-pink"
+              />
+            </div>
             <button 
-              type="button"
-              onClick={handleGoogleLogin}
-              className="w-full bg-white border border-gray-100 text-gray-900 rounded-xl py-4 font-bold uppercase tracking-widest text-sm hover:bg-gray-50 transition-all shadow-sm flex items-center justify-center gap-3"
+              type="submit"
+              disabled={isLoggingIn}
+              className="w-full bg-gray-900 text-white rounded-xl py-4 font-bold uppercase tracking-widest text-sm hover:bg-accent-pink transition-all shadow-sm flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Login with Google
+              {isLoggingIn ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+              ) : null}
+              {isLoggingIn ? 'Connecting...' : 'Login'}
             </button>
-          </div>
+          </form>
         </motion.div>
         
         {/* Notification Toast */}
@@ -336,6 +418,7 @@ export const Admin: React.FC = () => {
             { id: 'trending', label: 'Trending Now', icon: TrendingUp },
             { id: 'settings', label: 'Website Settings', icon: Save },
             { id: 'analytics', label: 'Analytics Panel', icon: TrendingUp },
+            { id: 'users', label: 'Manage Users', icon: User },
           ].map((item) => (
             <motion.button
               key={item.id}
@@ -636,19 +719,32 @@ export const Admin: React.FC = () => {
                     </div>
                     <div>
                       <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">Content</label>
-                      <textarea 
-                        required
-                        minLength={10}
-                        maxLength={10000}
-                        value={editingBlog ? editingBlog.content : (newBlog.content || '')}
-                        onChange={(e) => editingBlog
-                          ? setEditingBlog({...editingBlog, content: e.target.value})
-                          : setNewBlog({...newBlog, content: e.target.value})
-                        }
-                        placeholder="Write article content..." 
-                        rows={8}
-                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-6 py-4 text-sm focus:outline-none focus:border-accent-pink resize-none"
-                      ></textarea>
+                      <div className={cn("rounded-xl overflow-hidden border transition-colors", isDarkMode ? "border-gray-700" : "border-gray-100")}>
+                        <Editor
+                          apiKey="no-api-key"
+                          init={{
+                            height: 400,
+                            menubar: false,
+                            plugins: [
+                              'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
+                              'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                              'insertdatetime', 'media', 'table', 'preview', 'help', 'wordcount'
+                            ],
+                            toolbar: 'undo redo | blocks | ' +
+                              'bold italic forecolor | alignleft aligncenter ' +
+                              'alignright alignjustify | bullist numlist outdent indent | ' +
+                              'removeformat | image link | help',
+                            content_style: 'body { font-family:Inter,sans-serif; font-size:16px }',
+                            skin: isDarkMode ? 'oxide-dark' : 'oxide',
+                            content_css: isDarkMode ? 'dark' : 'default'
+                          }}
+                          value={editingBlog ? editingBlog.content : (newBlog.content || '')}
+                          onEditorChange={(content) => editingBlog
+                            ? setEditingBlog({...editingBlog, content})
+                            : setNewBlog({...newBlog, content})
+                          }
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-4">
                       <button 
@@ -1045,6 +1141,101 @@ export const Admin: React.FC = () => {
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          {activeTab === 'users' && (
+            <motion.div
+              key="users"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="space-y-12"
+            >
+              <h1 className="text-4xl font-serif font-bold">Manage Users</h1>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Create User Form */}
+                <div className={cn("p-10 rounded-[3rem] shadow-sm border transition-colors", isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100")}>
+                  <h3 className="text-2xl font-serif font-bold mb-8">Create Admin</h3>
+                  <form onSubmit={handleCreateUser} className="space-y-6">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Name</label>
+                      <input 
+                        type="text" 
+                        value={newUser.name}
+                        onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                        className={cn("w-full border rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-accent-pink transition-colors", isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-gray-50 border-gray-100")}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Email</label>
+                      <input 
+                        type="email" 
+                        value={newUser.email}
+                        onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                        className={cn("w-full border rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-accent-pink transition-colors", isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-gray-50 border-gray-100")}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Password</label>
+                      <input 
+                        type="password" 
+                        value={newUser.password}
+                        onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                        className={cn("w-full border rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-accent-pink transition-colors", isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-gray-50 border-gray-100")}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <button 
+                      type="submit"
+                      disabled={isCreatingUser}
+                      className="w-full bg-gray-900 text-white rounded-2xl py-4 font-bold uppercase tracking-widest text-sm hover:bg-accent-pink transition-all shadow-sm flex items-center justify-center gap-3 disabled:opacity-50"
+                    >
+                      {isCreatingUser ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                      ) : <Plus size={20} />}
+                      {isCreatingUser ? 'Creating...' : 'Create User'}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Users List */}
+                <div className={cn("lg:col-span-2 p-10 rounded-[3rem] shadow-sm border transition-colors", isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100")}>
+                  <h3 className="text-2xl font-serif font-bold mb-8">Admin Users</h3>
+                  <div className="space-y-4">
+                    {users.map((user) => (
+                      <div key={user.id} className={cn("flex items-center justify-between p-6 rounded-2xl border transition-colors", isDarkMode ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-100")}>
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-accent-pink/10 text-accent-pink rounded-full flex items-center justify-center">
+                            <User size={20} />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold">{user.name || 'Admin User'}</h4>
+                            <p className="text-xs text-gray-400">{user.email}</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                          title="Delete User"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    ))}
+                    {users.length === 0 && (
+                      <div className="text-center py-12 text-gray-400">
+                        <User size={48} className="mx-auto mb-4 opacity-20" />
+                        <p>No additional admin users found.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

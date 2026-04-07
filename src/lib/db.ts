@@ -161,6 +161,28 @@ export const deletePost = async (id: string) => {
   }
 };
 
+// --- Users ---
+export const getUsers = async () => {
+  const path = 'users';
+  try {
+    const q = query(collection(db, path));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+    return [];
+  }
+};
+
+export const deleteUserDoc = async (id: string) => {
+  const path = `users/${id}`;
+  try {
+    await deleteDoc(doc(db, 'users', id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+};
+
 // --- Settings ---
 export const getSettings = async (): Promise<WebsiteSettings | null> => {
   const path = 'settings/main';
@@ -171,7 +193,11 @@ export const getSettings = async (): Promise<WebsiteSettings | null> => {
       return docSnap.data() as WebsiteSettings;
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'permission-denied') {
+      console.warn('Could not load settings: Missing permissions.');
+      return null;
+    }
     handleFirestoreError(error, OperationType.GET, path);
     return null;
   }
@@ -197,7 +223,11 @@ export const getAnalytics = async (): Promise<Analytics | null> => {
       return docSnap.data() as Analytics;
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'permission-denied') {
+      console.warn('Could not load analytics: Missing permissions.');
+      return null;
+    }
     handleFirestoreError(error, OperationType.GET, path);
     return null;
   }
@@ -227,8 +257,12 @@ export const trackPageView = async () => {
       totalPageViews: increment(1),
       dailyStats 
     }, { merge: true });
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+  } catch (error: any) {
+    if (error?.code === 'permission-denied') {
+      console.warn('Analytics tracking skipped: Missing permissions. Please update Firestore rules.');
+    } else {
+      console.error('Analytics tracking error:', error);
+    }
   }
 };
 

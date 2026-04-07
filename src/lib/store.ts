@@ -19,10 +19,15 @@ testConnection();
 
 export const store = {
   // Auth
-  loginWithGoogle: authService.loginWithGoogle,
+  loginWithEmail: authService.loginWithEmail,
+  createAdminUser: authService.createAdminUser,
   logout: authService.logout,
   subscribeToAuthChanges: authService.subscribeToAuthChanges,
   verifyAdmin: authService.verifyAdmin,
+
+  // Users
+  getUsers: dbService.getUsers,
+  deleteUserDoc: dbService.deleteUserDoc,
 
   // Blogs
   getBlogs: dbService.getPosts,

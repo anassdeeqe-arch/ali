@@ -1,15 +1,15 @@
 import { 
   signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
   signOut, 
   onAuthStateChanged,
   User,
-  GoogleAuthProvider,
-  signInWithPopup
+  getAuth
 } from 'firebase/auth';
-import { getDoc, doc } from 'firebase/firestore';
+import { getDoc, doc, setDoc } from 'firebase/firestore';
+import { initializeApp } from 'firebase/app';
 import { auth, db } from './firebase';
-
-const googleProvider = new GoogleAuthProvider();
+import firebaseConfig from '../../firebase-applet-config.json';
 
 export const verifyAdmin = async (user: User) => {
   const allowedEmails = ["anassdeeqe@gmail.com", "salmabibi7867868@gmail.com"];
@@ -27,9 +27,9 @@ export const verifyAdmin = async (user: User) => {
   return false;
 };
 
-export const loginWithGoogle = async () => {
+export const loginWithEmail = async (email: string, password: string) => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
+    const result = await signInWithEmailAndPassword(auth, email, password);
     const isAdmin = await verifyAdmin(result.user);
     
     if (!isAdmin) {
@@ -39,7 +39,33 @@ export const loginWithGoogle = async () => {
     
     return result.user;
   } catch (error) {
-    console.error('Google Login Error:', error);
+    console.error('Login Error:', error);
+    throw error;
+  }
+};
+
+export const createAdminUser = async (email: string, password: string, name: string) => {
+  // We use a secondary app instance to create the user so it doesn't log out the current admin
+  const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
+  const secondaryAuth = getAuth(secondaryApp);
+  
+  try {
+    const result = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+    
+    // Save user role in Firestore
+    await setDoc(doc(db, 'users', result.user.uid), {
+      email: result.user.email,
+      name: name,
+      role: 'admin',
+      createdAt: new Date()
+    });
+    
+    // Sign out the secondary app so it doesn't persist
+    await signOut(secondaryAuth);
+    
+    return result.user;
+  } catch (error) {
+    console.error('Create User Error:', error);
     throw error;
   }
 };

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowRight, Star, Heart, Share2, Instagram, Facebook, Twitter } from 'lucide-react';
 import { store } from '../lib/store';
+import { stripHtml } from '../lib/utils';
 import { Newsletter } from '../components/Newsletter';
 import { BlogPost, WebsiteSettings } from '../types';
 
@@ -103,6 +104,7 @@ export const Home: React.FC = () => {
                   <img 
                     src={blog.image} 
                     alt={blog.title} 
+                    loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                     referrerPolicy="no-referrer"
                   />
@@ -120,7 +122,7 @@ export const Home: React.FC = () => {
                     <Link to={`/blog/${blog.id}`}>{blog.title}</Link>
                   </h3>
                   <p className="text-gray-500 text-sm line-clamp-3 mb-6 flex-grow">
-                    {blog.content}
+                    {stripHtml(blog.content)}
                   </p>
                   <div className="flex justify-between items-center pt-4 border-t border-gray-50">
                     <Link to={`/blog/${blog.id}`} className="text-xs font-bold uppercase tracking-widest text-gray-900 hover:text-accent-pink transition-colors">
@@ -156,6 +158,7 @@ export const Home: React.FC = () => {
                 <img 
                   src={cat.img} 
                   alt={cat.name} 
+                  loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   referrerPolicy="no-referrer"
                 />
@@ -181,6 +184,7 @@ export const Home: React.FC = () => {
                     <img 
                       src={blog.image} 
                       alt={blog.title} 
+                      loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       referrerPolicy="no-referrer"
                     />
@@ -195,7 +199,7 @@ export const Home: React.FC = () => {
                       <Link to={`/blog/${blog.id}`}>{blog.title}</Link>
                     </h3>
                     <p className="text-gray-500 text-sm line-clamp-3 mb-6">
-                      {blog.content}
+                      {stripHtml(blog.content)}
                     </p>
                     <Link to={`/blog/${blog.id}`} className="text-xs font-bold uppercase tracking-widest text-gray-900 flex items-center gap-2 hover:text-accent-pink transition-colors">
                       Read Full Article <ArrowRight size={14} />
@@ -220,6 +224,7 @@ export const Home: React.FC = () => {
                   <img 
                     src={settings.profileImage} 
                     alt={settings.editorName} 
+                    loading="lazy"
                     className="w-full h-full object-cover rounded-full"
                     referrerPolicy="no-referrer"
                   />
@@ -245,7 +250,7 @@ export const Home: React.FC = () => {
                 {blogs.slice(0, 3).map((blog) => (
                   <Link key={blog.id} to={`/blog/${blog.id}`} className="flex gap-4 group">
                     <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg">
-                      <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img src={blog.image} alt={blog.title} loading="lazy" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                     <div>
                       <h4 className="text-sm font-serif font-bold group-hover:text-accent-pink transition-colors line-clamp-2">
