@@ -22,6 +22,7 @@ export const store = {
   loginWithGoogle: authService.loginWithGoogle,
   logout: authService.logout,
   subscribeToAuthChanges: authService.subscribeToAuthChanges,
+  verifyAdmin: authService.verifyAdmin,
 
   // Blogs
   getBlogs: dbService.getPosts,

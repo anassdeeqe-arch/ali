@@ -33,8 +33,19 @@ export const Admin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = store.subscribeToAuthChanges((user) => {
-      setIsLoggedIn(!!user);
+    const unsubscribe = store.subscribeToAuthChanges(async (user) => {
+      if (user) {
+        const isAdmin = await store.verifyAdmin(user);
+        if (isAdmin) {
+          setIsLoggedIn(true);
+        } else {
+          await store.logout();
+          setIsLoggedIn(false);
+          showNotification('error', 'Access denied. Your email is not registered as an admin.');
+        }
+      } else {
+        setIsLoggedIn(false);
+      }
       setIsLoading(false);
     });
     return () => unsubscribe();
