@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "BlogPost": {
+      "title": "Blog Post",
+      "description": "A fashion blog article.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 5, "maxLength": 100 },
+        "content": { "type": "string", "minLength": 10, "maxLength": 10000 },
+        "image": { "type": "string", "format": "uri" },
+        "category": { "type": "string", "enum": ["Summer", "Wedding", "Jewelry", "Trending"] },
+        "views": { "type": "integer", "minimum": 0 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "productLink": { "type": "string", "format": "uri" }
+      },
+      "required": ["title", "content", "image", "category"]
+    },
+    "WebsiteSettings": {
+      "title": "Website Settings",
+      "description": "Global configuration for the website.",
+      "type": "object",
+      "properties": {
+        "instagram": { "type": "string", "format": "uri" },
+        "facebook": { "type": "string", "format": "uri" },
+        "pinterest": { "type": "string", "format": "uri" },
+        "youtube": { "type": "string", "format": "uri" },
+        "editorName": { "type": "string", "minLength": 2, "maxLength": 50 },
+        "editorBio": { "type": "string", "maxLength": 500 },
+        "profileImage": { "type": "string", "format": "uri" },
+        "websiteLogo": { "type": "string", "format": "uri" },
+        "footerText": { "type": "string", "maxLength": 200 }
+      }
+    },
+    "Analytics": {
+      "title": "Analytics",
+      "description": "Site-wide traffic and engagement stats.",
+      "type": "object",
+      "properties": {
+        "pageViews": { "type": "integer" }
+      }
+    }
+  },
+  "firestore": {
+    "/posts/{postId}": { "schema": "BlogPost", "description": "Collection of blog articles." },
+    "/settings/main": { "schema": "WebsiteSettings", "description": "Global site settings." },
+    "/analytics/main": { "schema": "Analytics", "description": "Site-wide analytics." }
+  }
+}
